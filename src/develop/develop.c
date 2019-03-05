@@ -667,6 +667,19 @@ void dt_dev_add_history_item_ext(dt_develop_t *dev, dt_iop_module_t *module, gbo
     }
 }
 
+
+static void remove_history_automatic_flag(const int imgid)
+{
+  dt_image_t *image = dt_image_cache_get(darktable.image_cache, imgid, 'w');
+
+  // clear flag
+  image->flags &= ~DT_IMAGE_HISTORY_AUTOMATIC;
+
+  // write through to sql+xmp
+  dt_image_cache_write_release(darktable.image_cache, image, DT_IMAGE_CACHE_SAFE);
+}
+
+
 void dt_dev_add_history_item(dt_develop_t *dev, dt_iop_module_t *module, gboolean enable)
 {
   if(!darktable.gui || darktable.gui->reset) return;
@@ -691,6 +704,8 @@ void dt_dev_add_history_item(dt_develop_t *dev, dt_iop_module_t *module, gboolea
     }
   }
 #endif
+
+  remove_history_automatic_flag(dev->image_storage.id);
 
   // invalidate buffers and force redraw of darkroom
   dt_dev_invalidate_all(dev);
@@ -883,6 +898,8 @@ void dt_dev_write_history_ext(dt_develop_t *dev, const int imgid)
   sqlite3_step(stmt);
   sqlite3_finalize(stmt);
 
+  remove_history_automatic_flag(dev->image_storage.id);
+
   /* attach / detach changed tag reflecting actual change */
   guint tagid = 0;
   dt_tag_new("darktable|changed", &tagid);
@@ -1041,7 +1058,7 @@ static void auto_apply_presets(dt_develop_t *dev)
   //  first time we are loading the image, try to import lightroom .xmp if any
   if(dev->image_loading) dt_lightroom_import(dev->image_storage.id, dev, TRUE);
 
-  image->flags |= DT_IMAGE_AUTO_PRESETS_APPLIED | DT_IMAGE_NO_LEGACY_PRESETS;
+  image->flags |= DT_IMAGE_AUTO_PRESETS_APPLIED | DT_IMAGE_NO_LEGACY_PRESETS | DT_IMAGE_HISTORY_AUTOMATIC;
   dt_pthread_mutex_unlock(&darktable.db_insert);
 
   // make sure these end up in the image_cache + xmp (sync through here if we set the flag)

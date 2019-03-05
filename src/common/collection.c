@@ -178,9 +178,16 @@ int dt_collection_update(const dt_collection_t *collection)
     else if(collection->params.filter_flags & COLLECTION_FILTER_EQUAL_RATING)
       wq = dt_util_dstrcat(wq, " %s (flags & 7) == %d", and_operator(&and_term), rating - 1);
 
-    if(collection->params.filter_flags & COLLECTION_FILTER_ALTERED)
-      wq = dt_util_dstrcat(wq, " %s id IN (SELECT imgid FROM main.history WHERE imgid=id)", and_operator(&and_term));
-    else if(collection->params.filter_flags & COLLECTION_FILTER_UNALTERED)
+    if(collection->params.filter_flags & COLLECTION_FILTER_HISTORY_ALTERED)
+    {
+      if(collection->params.filter_flags & COLLECTION_FILTER_HISTORY_AUTOMATIC)
+        wq = dt_util_dstrcat(wq, " %s id IN (SELECT imgid FROM main.history WHERE imgid=id)", and_operator(&and_term));
+      else
+        wq = dt_util_dstrcat(wq, " %s id IN (SELECT imgid FROM main.history WHERE imgid=id) AND flags & 32768 == 0", and_operator(&and_term));
+    }
+    else if(collection->params.filter_flags & COLLECTION_FILTER_HISTORY_AUTOMATIC)
+        wq = dt_util_dstrcat(wq, " %s id IN (SELECT imgid FROM main.history WHERE imgid=id) AND flags & 32768", and_operator(&and_term));
+    else if(collection->params.filter_flags & COLLECTION_FILTER_HISTORY_EMPTY)
       wq = dt_util_dstrcat(wq, " %s id NOT IN (SELECT imgid FROM main.history WHERE imgid=id)", and_operator(&and_term));
 
     /* add where ext if wanted */

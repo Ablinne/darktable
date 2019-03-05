@@ -2173,6 +2173,13 @@ int dt_exif_xmp_read(dt_image_t *img, const char *filename, const int history_on
     // when we are reading the xmp data it doesn't make sense to flag the image as removed
     img->flags &= ~DT_IMAGE_REMOVE;
 
+    if((pos = xmpData.findKey(Exiv2::XmpKey("Xmp.darktable.history_automatic"))) != xmpData.end())
+    {
+      int32_t i = pos->toLong();
+      // set or clear bit in image struct
+      if(i == 1) img->flags |= DT_IMAGE_HISTORY_AUTOMATIC;
+      if(i == 0) img->flags &= ~DT_IMAGE_HISTORY_AUTOMATIC;
+    }
 
     // masks
     // clean all old masks for this image
@@ -2449,6 +2456,12 @@ static void dt_exif_xmp_read_data(Exiv2::XmpData &xmpData, const int imgid)
     xmpData["Xmp.darktable.auto_presets_applied"] = 1;
   else
     xmpData["Xmp.darktable.auto_presets_applied"] = 0;
+
+  if(stars & DT_IMAGE_HISTORY_AUTOMATIC)
+    xmpData["Xmp.darktable.history_automatic"] = 1;
+  else
+    xmpData["Xmp.darktable.history_automatic"] = 0;
+
 
   // get tags from db, store in dublin core
   std::unique_ptr<Exiv2::Value> v1(Exiv2::Value::create(Exiv2::xmpSeq)); // or xmpBag or xmpAlt.

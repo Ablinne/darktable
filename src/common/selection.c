@@ -325,7 +325,7 @@ void dt_selection_select_unaltered(dt_selection_t *selection)
   /* set unaltered collection filter and update query */
   const uint32_t old_filter_flags = dt_collection_get_filter_flags(selection->collection);
   dt_collection_set_filter_flags(selection->collection, (dt_collection_get_filter_flags(selection->collection)
-                                                         | COLLECTION_FILTER_UNALTERED));
+                                                         | COLLECTION_FILTER_HISTORY_EMPTY));
   dt_collection_update(selection->collection);
 
 

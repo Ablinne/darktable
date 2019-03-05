@@ -1246,13 +1246,18 @@ static void list_view(dt_lib_collect_rule_t *dr)
         g_free(makermodel_query);
         break;
 
-      case DT_COLLECTION_PROP_HISTORY: // History, 2 hardcoded alternatives
+      case DT_COLLECTION_PROP_HISTORY: // History, 3 hardcoded alternatives
+        // _("altered"): History non-empty & ~DT_IMAGE_HISTORY_AUTOMATIC
+        // _("automatic"): History non-empty & DT_IMAGE_HISTORY_AUTOMATIC
+        // _("empty"): History empty
         g_snprintf(query, sizeof(query), "SELECT CASE "
-                           "altered WHEN 1 THEN '%s' ELSE '%s' END as altered, 1, COUNT(*) AS count "
+                           "history_non_empty WHEN 1 THEN "
+                           "CASE flags & 32768 WHEN 32768 THEN '%s' ELSE '%s' END"
+                           "ELSE '%s' END as history_state, 1, COUNT(*) AS count "
                            "FROM main.images LEFT JOIN "
-                           "(SELECT DISTINCT imgid AS history_id, 1 AS altered FROM main.history) ON id = history_id "
-                           "WHERE %s GROUP BY altered ORDER BY altered ASC",
-                   _("altered"),  _("not altered"), where_ext);
+                           "(SELECT DISTINCT imgid AS history_id, 1 AS history_non_empty FROM main.history) ON id = history_id "
+                           "WHERE %s GROUP BY history_state ORDER BY history_state ASC",
+                   _("automatic"),  _("altered"), _("empty"), where_ext);
         break;
 
       case DT_COLLECTION_PROP_GEOTAGGING: // Geotagging, 2 hardcoded alternatives
